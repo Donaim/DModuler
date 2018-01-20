@@ -35,10 +35,13 @@
   <ItemGroup>
     <Compile Include="dmoduler.cs" />
     <Compile Include="module_interface.cs" />
-    <Compile Include="moduler_errors.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="System" />
+    <Reference Include="vutils, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\ref\vutils.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Sharer\Sharer.csproj">
