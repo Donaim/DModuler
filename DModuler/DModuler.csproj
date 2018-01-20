@@ -35,6 +35,7 @@
   <ItemGroup>
     <Compile Include="dmoduler.cs" />
     <Compile Include="module_interface.cs" />
+    <Compile Include="moduler_errors.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="System" />

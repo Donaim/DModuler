@@ -15,33 +15,33 @@ namespace DModulerSpace
             sh = sh_;
         }
 
-        public bool TryLoadLibrary(string file) => LoadLibrary(file, out var _);
-        public bool LoadLibrary(string file, out Exception ex, bool ignoreConstructErrors = false, bool ignoreLoadingErrors = true) {
-            ex = null;
-
+        public OutputEx TryLoadLibrary(string file) => LoadLibrary(file, out var _);
+        public OutputEx LoadLibrary(string file, out OutputEx re, bool ignoreConstructErrors = false, bool ignoreLoadingErrors = true) {
+            re = new OutputEx();
+            _LoadLibrary(file, re, ignoreConstructErrors, ignoreLoadingErrors);
+            return re;
+        }
+        void _LoadLibrary(string file, OutputEx re, bool ignoreConstructErrors = false, bool ignoreLoadingErrors = true) {
             if(!File.Exists(file))
             {
-                ex = new Exception($"Libary file \"{file}\" does not exist!");
-                return false;
+                re.Throw($"Libary file \"{file}\" does not exist!");
+                return;
             }
 
             Assembly ass;
             try {
                 ass = Assembly.UnsafeLoadFrom(file);
             } catch (Exception lex) {
-                ex = new Exception($"Error loading assembly \"{file}\"", lex);
-                return false;
+                re.Throw($"Error loading assembly \"{file}\"", lex);
+                return;
             }
 
-            if(!parseLibrary(ass, out ex, ignoreConstructErrors, out var list)) { return false; }
-            if(!loadIntefaces(list, out ex, ignoreLoadingErrors)) { return false; }
-
-            return true;
+            if(!parseLibrary(ass, re, ignoreConstructErrors, out var list)) { return; }
+            if(!loadIntefaces(list, re, ignoreLoadingErrors)) { return; }
         }
 
         static bool isLoadableType(Type t) => t.GetInterface(nameof(ILoadable)) != default(Type);
-        static bool createInstances(IEnumerable<Type> ldbTypes, out IEnumerable<ILoadable> list, out Exception ex, bool ignoreConstructErrors) {
-            ex = null;
+        static OutputEx createInstances(IEnumerable<Type> ldbTypes, out IEnumerable<ILoadable> list, OutputEx err, bool ignoreConstructErrors) {
             var re = new List<ILoadable>();
       
             foreach(var o in ldbTypes) {
@@ -50,10 +50,10 @@ namespace DModulerSpace
                     re.Add((ILoadable)inst);
                 }
                 catch (Exception cex) {
-                    ex = new Exception($"Cannot create instance of type \"{o.Name}\" !", cex);
+                    err.Log($"Cannot create instance of type \"{o.Name}\" !", cex);
                     if(!ignoreConstructErrors) {
                         list = null;
-                        return false;
+                        return err.ThrowLast();
                     }
                 }
             }
@@ -61,21 +61,17 @@ namespace DModulerSpace
             list = re;
             return true;
         }
-        private bool parseLibrary(Assembly a, out Exception ex, bool ignoreConstructErrors, out IEnumerable<ILoadable> list) {
+        private OutputEx parseLibrary(Assembly a, OutputEx err , bool ignoreConstructErrors, out IEnumerable<ILoadable> list) {
             var types = a.GetTypes();
             var ldbTypes = types.Where(isLoadableType);
 
-            if(!createInstances(ldbTypes, out list, out var cex, ignoreConstructErrors)) {
-                ex = new Exception($"Cannot parse library \"{a.GetName()}\"", cex);
-                list = null;
-                return false;
+            if(!createInstances(ldbTypes, out list, err, ignoreConstructErrors)) {
+                return err.Throw($"Cannot parse library \"{a.GetName()}\"");
             }
 
-            ex = null;
-            return true;
+            return err;
         }
-        private bool loadIntefaces(IEnumerable<ILoadable> list, out Exception ex, bool ignoreLoadingErrors) {
-            ex = null;
+        private OutputEx loadIntefaces(IEnumerable<ILoadable> list, OutputEx err, bool ignoreLoadingErrors) {
             foreach(var l in list) {
                 loadInterface(l);
             }
@@ -85,8 +81,8 @@ namespace DModulerSpace
                     l.OnAssemblyLoad(this);
                 }
                 catch (Exception lex) {
-                    ex = new Exception($"Interface \"{l}\" throwed error on load", lex);
-                    if(!ignoreLoadingErrors) { return false; }
+                    err.Log($"Interface \"{l}\" throwed error on load", lex);
+                    if(!ignoreLoadingErrors) { return err.ThrowLast(); }
                 }
             }
             foreach(var l in list) {
@@ -94,11 +90,12 @@ namespace DModulerSpace
                     l.AfterAssemblyLoad(sh);
                 }
                 catch (Exception aex) {
-                    ex = new Exception($"Interface \"{l}\" throwed error after load", aex);
-                    if(!ignoreLoadingErrors) { return false; }
+                    err.Log($"Interface \"{l}\" throwed error after load", aex);
+                    if(!ignoreLoadingErrors) { return err.ThrowLast(); }
                 }
             }
-            return true;
+
+            return err;
         }
 
         private List<ILoadable> loadedList = new List<ILoadable>();
