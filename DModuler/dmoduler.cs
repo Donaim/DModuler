@@ -15,7 +15,7 @@ namespace DModulerSpace
             sh = sh_;
         }
 
-        public OutputEx TryLoadLibrary(string file) => LoadLibrary(file, out var _);
+        public OutputEx TryLoadLibrary(string file) => LoadLibrary(file, out _);
         public OutputEx LoadLibrary(string file, out OutputEx re, bool ignoreConstructErrors = false, bool ignoreLoadingErrors = true) {
             re = new OutputEx();
             _LoadLibrary(file, re, ignoreConstructErrors, ignoreLoadingErrors);
