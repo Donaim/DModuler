@@ -6,19 +6,22 @@ namespace SharerSpace
     public class Sharer {
         private readonly Dictionary<string, ISharable> dict = new Dictionary<string, ISharable>();
 
-        public Sharer() {
-
-        }
+        public Sharer() { }
 
         public IEnumerable<string> Names => dict.Keys;
 
         public void AddInterface(ISharable o) {
-            try {
-                dict.Add(o.Name, o);
-            }
+            try { dict.Add(o.Name, o); }
             catch (Exception ex) {
                 throw new Exception($"Sharer already contains \"{o.Name}\" !", ex);
             }
+        }
+        public bool TryAddInterface(ISharable o) {
+            try {
+                dict.Add(o.Name, o);
+                return true;
+            }
+            catch { return false; }
         }
         public T GetInterface<T>(string name) => (T)dict[name];
         public bool TryGetInterface<T>(string name, out T face) {

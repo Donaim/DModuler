@@ -17,6 +17,24 @@
                 "focus": true
             },
             "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "buildRelease",
+            "command": "msbuild",
+            "args": [
+                "${workspaceFolder}",
+                "/property:Configuration=Release",
+                "/property:GenerateFullPaths=true",
+                "/t:build",
+                "/verbosity:minimal"           
+            ],
+            "type": "shell",
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "focus": true
+            },
+            "problemMatcher": "$msCompile"
         }
     ]
 }
