@@ -17,12 +17,12 @@ namespace DModulerSpace
         }
 
         public OutputEx TryLoadLibrary(string file) => LoadLibrary(file, out _);
-        public OutputEx LoadLibrary(string file, out OutputEx re, bool ignoreConstructErrors = false, bool ignoreLoadingErrors = true) {
+        public OutputEx LoadLibrary(string file, out OutputEx re, bool ignoreConstructErrors = false, bool ignoreLoadingErrors = true, bool runAssembly = false) {
             re = new OutputEx();
-            _LoadLibrary(file, re, ignoreConstructErrors, ignoreLoadingErrors);
+            _LoadLibrary(file, re, ignoreConstructErrors, ignoreLoadingErrors, runAssembly);
             return re;
         }
-        void _LoadLibrary(string file, OutputEx re, bool ignoreConstructErrors = false, bool ignoreLoadingErrors = true) {
+        void _LoadLibrary(string file, OutputEx re, bool ignoreConstructErrors, bool ignoreLoadingErrors, bool runAssembly) {
             if(!File.Exists(file))
             {
                 re.Throw($"Libary file \"{file}\" does not exist!");
@@ -39,6 +39,14 @@ namespace DModulerSpace
 
             if(!parseLibrary(ass, re, ignoreConstructErrors, out var list)) { return; }
             if(!loadIntefaces(list, re, ignoreLoadingErrors)) { return; }
+
+            if(runAssembly) { if(!runStartups(list, re)) { return; } }
+        }
+        static bool runStartups(IEnumerable<ILoadable> list, OutputEx re) {
+            foreach(var v in list) {
+                if(v is IAssemblyStarter st) { st.Start(re); }
+            }
+            return re;
         }
 
         static bool isLoadableType(Type t) => t.GetInterface(nameof(ILoadable)) != default(Type);
