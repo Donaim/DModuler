@@ -11,6 +11,8 @@ namespace SharerSpace
 
         public IEnumerable<string> INames => dict.Keys;
         public IEnumerable<string> TNames => types.Keys;
+        public bool ContainsI(string name) => dict.ContainsKey(name);
+        public bool ContainsT(string name) => types.ContainsKey(name);
 
         public bool AddType(Type t) => AddType(t, t.Name);
         public bool AddType(Type t, string name) {

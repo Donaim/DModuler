@@ -16,7 +16,7 @@ namespace DModulerSpace
             sh = sh_;
         }
 
-        public OutputEx TryLoadLibrary(string file) => LoadLibrary(file, out _);
+        public bool TryLoadLibrary(string file) => LoadLibrary(file, out _);
         public OutputEx LoadLibrary(string file, out OutputEx re, bool ignoreConstructErrors = false, bool ignoreLoadingErrors = true, bool runAssembly = false) {
             re = new OutputEx();
             _LoadLibrary(file, re, ignoreConstructErrors, ignoreLoadingErrors, runAssembly);
@@ -37,26 +37,26 @@ namespace DModulerSpace
                 return;
             }
 
-            if(!parseLibrary(ass, re, ignoreConstructErrors, out var list)) { return; }
+            if(!initLibrary(ass, re, ignoreConstructErrors, out var list)) { return; }
             if(!loadIntefaces(list, re, ignoreLoadingErrors)) { return; }
 
             if(runAssembly) { if(!runStartups(list, re)) { return; } }
         }
-        static bool runStartups(IEnumerable<ILoadable> list, OutputEx re) {
-            foreach(var v in list) {
-                if(v is IAssemblyStarter st) { st.Start(re); }
+        static bool runStartups(IEnumerable<object> list, OutputEx re) {
+            foreach(var o in list) {
+                if(o is IAssemblyStarter st) { st.Start(re); }
             }
             return re;
         }
 
-        static bool isLoadableType(Type t) => t.GetInterface(nameof(ILoadable)) != default(Type);
-        static OutputEx createInstances(IEnumerable<Type> ldbTypes, out IEnumerable<ILoadable> list, OutputEx err, bool ignoreConstructErrors) {
-            var re = new List<ILoadable>();
+        static bool isTypeToLoad(Type t) => t.GetInterface(nameof(ILoadable)) != default(Type) || t.GetInterface(nameof(IAssemblyStarter)) != default(Type);
+        static OutputEx createInstances(IEnumerable<Type> types, out IEnumerable<object> list, OutputEx err, bool ignoreConstructErrors) {
+            var re = new List<object>();
       
-            foreach(var o in ldbTypes) {
+            foreach(var o in types) {
                 try {
                     var inst = Activator.CreateInstance(o);
-                    re.Add((ILoadable)inst);
+                    re.Add(inst);
                 }
                 catch (Exception cex) {
                     err.Log($"Cannot create instance of type \"{o.Name}\" !", cex);
@@ -70,51 +70,45 @@ namespace DModulerSpace
             list = re;
             return true;
         }
-        private OutputEx parseLibrary(Assembly a, OutputEx err , bool ignoreConstructErrors, out IEnumerable<ILoadable> list) {
+        private OutputEx initLibrary(Assembly a, OutputEx err , bool ignoreConstructErrors, out IEnumerable<object> list) {
             var types = a.GetTypes();
-            var ldbTypes = types.Where(isLoadableType);
+            // Console.WriteLine($"Types = [{string.Join(" | ", types.ToList())}]");
+            var ldbTypes = types.Where(isTypeToLoad);
 
             if(!createInstances(ldbTypes, out list, err, ignoreConstructErrors)) {
-                return err.Throw($"Cannot parse library \"{a.GetName()}\"");
+                return err.Throw($"Cannot init library \"{a.GetName()}\"");
             }
 
             return err;
         }
-        private OutputEx loadIntefaces(IEnumerable<ILoadable> list, OutputEx err, bool ignoreLoadingErrors) {
-            foreach(var l in list) {
-                loadInterface(l);
+        private OutputEx loadIntefaces(IEnumerable<object> list, OutputEx err, bool ignoreLoadingErrors) {
+            foreach(var o in list) {
+                if(o is ISharable ish) {
+                    sh.AddType(ish.GetType(), ish.Name);
+                    sh.AddInterface(ish);
+                }
             }
             
-            foreach(var l in list) {
-                try {
-                    l.OnAssemblyLoad(this);
-                }
-                catch (Exception lex) {
-                    err.Log($"Interface \"{l}\" throwed error on load", lex);
-                    if(!ignoreLoadingErrors) { return err.ThrowLast(); }
+            foreach(var o in list) {
+                if(o is ILoadable l) {
+                    try { l.OnAssemblyLoad(this); }
+                    catch (Exception lex) {
+                        err.Log($"Interface \"{l}\" throwed error on load", lex);
+                        if(!ignoreLoadingErrors) { return err.ThrowLast(); }
+                    }
                 }
             }
-            foreach(var l in list) {
-                try {
-                    l.AfterAssemblyLoad(sh);
-                }
-                catch (Exception aex) {
-                    err.Log($"Interface \"{l}\" throwed error after load", aex);
-                    if(!ignoreLoadingErrors) { return err.ThrowLast(); }
+            foreach(var o in list) {
+                if(o is ILoadable l) {
+                    try { l.AfterAssemblyLoad(sh); }
+                    catch (Exception aex) {
+                        err.Log($"Interface \"{l}\" throwed error after load", aex);
+                        if(!ignoreLoadingErrors) { return err.ThrowLast(); }
+                    }
                 }
             }
 
             return err;
         }
-
-        private List<ILoadable> loadedList = new List<ILoadable>();
-        private void loadInterface(ILoadable ildb) {
-            loadedList.Add(ildb);
-            if(ildb is ISharable ish) {
-                sh.AddType(ildb.GetType(), ish.Name);
-                sh.AddInterface(ish);
-            }
-        }
     }
-    
 }
