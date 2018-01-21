@@ -4,11 +4,39 @@ using System.Collections.Generic;
 namespace SharerSpace
 {
     public class Sharer {
+        private readonly Dictionary<string, Type> types = new Dictionary<string, Type>();
         private readonly Dictionary<string, ISharable> dict = new Dictionary<string, ISharable>();
 
         public Sharer() { }
 
-        public IEnumerable<string> Names => dict.Keys;
+        public IEnumerable<string> INames => dict.Keys;
+        public IEnumerable<string> TNames => types.Keys;
+
+        public bool AddType(Type t) => AddType(t, t.Name);
+        public bool AddType(Type t, string name) {
+            if(t.GetInterface(nameof(ISharable)) == null) { return false; }
+  
+            try { types.Add(t.Name, t); return true; }
+            catch { return false; }
+        }
+        public T CreateInterface<T>(string name) => CreateInterface<T>(types[name]);
+        private T CreateInterface<T>(Type t) => (T) Activator.CreateInstance(t);
+        public bool TryCreateInterface<T>(string name, out T o) {
+            o = default(T);
+            
+            bool get = types.TryGetValue(name, out var ot);
+            if(!get) { return false; }
+
+            object instance;
+            try { instance = Activator.CreateInstance(ot); }
+            catch { return false; }
+
+            if(instance is T converted) { 
+                o = converted;
+                return true; 
+            }
+            else { return false; }
+        }
 
         public void AddInterface(ISharable o) {
             try { dict.Add(o.Name, o); }

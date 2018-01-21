@@ -103,6 +103,7 @@ namespace DModulerSpace
         private void loadInterface(ILoadable ildb) {
             loadedList.Add(ildb);
             if(ildb is ISharable ish) {
+                sh.AddType(ildb.GetType(), ish.Name);
                 sh.AddInterface(ish);
             }
         }
