@@ -54,6 +54,8 @@ namespace DModulerSpace
             var re = new List<object>();
       
             foreach(var o in types) {
+                if(o.IsAbstract) { continue; } // do not create abstract classes
+
                 try {
                     var inst = Activator.CreateInstance(o);
                     re.Add(inst);
