@@ -40,12 +40,11 @@ namespace DModulerSpace
 
             if(runAssembly) { runStartups(list, re); }
         }
-        static bool runStartups(IEnumerable<object> list, OutputEx re) {
+        static void runStartups(IEnumerable<object> list, OutputEx re) {
             foreach(var o in list) {
                 if(o is IAssemblyStarter st) { st.Start(re); }
             }
-            if (re) { return re; }
-            else { throw re; }
+            if (!re) { throw re; }
         }
         static void createInstances(IEnumerable<Type> types, out IEnumerable<object> list, OutputEx err, bool ignoreConstructErrors) {
             var re = new List<object>();
