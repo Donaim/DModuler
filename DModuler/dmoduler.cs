@@ -48,13 +48,11 @@ namespace DModulerSpace
             }
             return re;
         }
-
-        static bool isTypeToLoad(Type t) => t.GetInterface(nameof(ILoadable)) != default(Type) || t.GetInterface(nameof(IAssemblyStarter)) != default(Type);
         static OutputEx createInstances(IEnumerable<Type> types, out IEnumerable<object> list, OutputEx err, bool ignoreConstructErrors) {
             var re = new List<object>();
       
             foreach(var o in types) {
-                if(o.IsAbstract) { continue; } // do not create abstract classes
+                if(o.IsAbstract || o.IsInterface) { continue; } // do not create abstract classes
 
                 try {
                     var inst = Activator.CreateInstance(o);
@@ -72,6 +70,7 @@ namespace DModulerSpace
             list = re;
             return true;
         }
+        static bool isTypeToLoad(Type t) => t.GetInterface(nameof(ILoadable)) != default(Type) || t.GetInterface(nameof(IAssemblyStarter)) != default(Type)|| t.GetInterface(nameof(IAutoshare)) != default(Type);
         private OutputEx initLibrary(Assembly a, OutputEx err , bool ignoreConstructErrors, out IEnumerable<object> list) {
             var types = a.GetTypes();
             // Console.WriteLine($"Types = [{string.Join(" | ", types.ToList())}]");

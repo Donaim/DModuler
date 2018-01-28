@@ -12,4 +12,5 @@ namespace DModulerSpace
         void OnAssemblyLoad(DModuler m);
         void AfterAssemblyLoad(Sharer sh);
     }
+    public interface IAutoshare : ISharable { }
 }

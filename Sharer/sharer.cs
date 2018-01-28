@@ -17,6 +17,7 @@ namespace SharerSpace
         public bool AddType(Type t) => AddType(t, t.Name);
         public bool AddType(Type t, string name) {
             if(t.GetInterface(nameof(ISharable)) == null) { return false; }
+            if(t.IsAbstract || t.IsInterface) { return false; }
   
             try { types.Add(t.Name, t); return true; }
             catch { return false; }
