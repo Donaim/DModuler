@@ -29,28 +29,42 @@ namespace DModulerSpace
             }
 
             Assembly ass;
+            Type[] types;
             try {
                 ass = Assembly.UnsafeLoadFrom(file);
+                types = ass.GetTypes();
             } catch (Exception lex) {
                 throw re.Throw($"Error loading assembly \"{file}\"", lex);
             }
 
-            initLibrary(ass, re, ignoreConstructErrors, out var list);
-            loadIntefaces(list, re, ignoreLoadingErrors);
+            createInstances(types, out var ldb_list, re, ignoreConstructErrors);
+            loadIntefaces(ldb_list, re, ignoreLoadingErrors);
+            autoaddInterfaces(types, re);
 
-            if(runAssembly) { runStartups(list, re); }
+            if(runAssembly) { runStartups(ldb_list, re); }
         }
-        static void runStartups(IEnumerable<object> list, OutputEx re) {
-            foreach(var o in list) {
-                if(o is IAssemblyStarter st) { st.Start(re); }
+        void autoaddInterfaces(IEnumerable<Type> types, OutputEx re) {
+            foreach(var t in types) {
+                var autosharetype = t.GetCustomAttribute<AutoShareTypeAttribute>();
+                if (autosharetype != null) {
+                    string name = autosharetype.Name != null ? autosharetype.Name : t.Name; 
+                    sh.AddType(t, name);
+                }
             }
-            if (!re) { throw re; }
+        }
+        static void runStartups(IEnumerable<object> ldb_list, OutputEx re) {
+            foreach(var o in ldb_list) {
+                if (o is IAssemblyStarter st) {
+                    try { st.Start(re); } 
+                    catch (Exception ex) { throw re.Throw(ex); }
+                }
+            }
         }
         static void createInstances(IEnumerable<Type> types, out IEnumerable<object> list, OutputEx err, bool ignoreConstructErrors) {
             var re = new List<object>();
             list = re;
       
-            foreach(var o in types) {
+            foreach(var o in types.Where(isTypeToLoad)) {
                 if(o.IsAbstract || o.IsInterface) { continue; } // do not create abstract classes
 
                 try {
@@ -66,23 +80,8 @@ namespace DModulerSpace
                 }
             }
         }
-        static bool isTypeToLoad(Type t) => t.GetInterface(nameof(ILoadable)) != default(Type) || t.GetInterface(nameof(IAssemblyStarter)) != default(Type)|| t.GetInterface(nameof(IAutoshare)) != default(Type);
-        private void initLibrary(Assembly a, OutputEx err , bool ignoreConstructErrors, out IEnumerable<object> list) {
-            var types = a.GetTypes();
-            // Console.WriteLine($"Types = [{string.Join(" | ", types.ToList())}]");
-            var ldbTypes = types.Where(isTypeToLoad);
-
-            try { createInstances(ldbTypes, out list, err, ignoreConstructErrors); }
-            catch { throw err.Throw($"Cannot init library \"{a.GetName()}\""); }
-        }
+        static bool isTypeToLoad(Type t) => t.GetInterface(nameof(ILoadable)) != default(Type) || t.GetInterface(nameof(IAssemblyStarter)) != default(Type);
         private void loadIntefaces(IEnumerable<object> list, OutputEx err, bool ignoreLoadingErrors) {
-            foreach(var o in list) {
-                if(o is ISharable ish) {
-                    sh.AddType(ish.GetType(), ish.Name);
-                    sh.AddInterface(ish);
-                }
-            }
-            
             foreach(var o in list) {
                 if(o is ILoadable l) {
                     try { l.OnAssemblyLoad(this); }

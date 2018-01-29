@@ -1,3 +1,4 @@
+using System;
 using SharerSpace;
 using vutils;
 
@@ -12,5 +13,12 @@ namespace DModulerSpace
         void OnAssemblyLoad(DModuler m);
         void AfterAssemblyLoad(Sharer sh);
     }
-    public interface IAutoshare : ISharable { }
+
+    [AttributeUsage(AttributeTargets.Class)]
+    public class AutoShareTypeAttribute : Attribute {
+        public readonly string Name;
+        public AutoShareTypeAttribute(string name = null) {
+            Name = name;
+        }
+    }
 }
