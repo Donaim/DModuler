@@ -25,16 +25,16 @@ namespace DModulerSpace
         void _LoadLibrary(string file, ResultV re, bool ignoreConstructErrors, bool ignoreLoadingErrors, bool runAssembly) {
             if(!File.Exists(file))
             {
-                throw re.Throw($"Libary file \"{file}\" does not exist!");
+                re.Throw($"Libary file \"{file}\" does not exist!");
             }
 
             Assembly ass;
-            Type[] types;
+            Type[] types = null;
             try {
                 ass = Assembly.UnsafeLoadFrom(file);
                 types = ass.GetTypes();
             } catch (Exception lex) {
-                throw re.Throw($"Error loading assembly \"{file}\"", lex);
+                re.Throw($"Error loading assembly \"{file}\"", lex);
             }
 
             createInstances(types, out var ldb_list, re, ignoreConstructErrors);
@@ -56,7 +56,7 @@ namespace DModulerSpace
             foreach(var o in ldb_list) {
                 if (o is IAssemblyStarter st) {
                     try { st.Start(re); } 
-                    catch (Exception ex) { throw re.Throw(ex); }
+                    catch (Exception ex) { re.Throw(ex); }
                 }
             }
         }
@@ -75,7 +75,7 @@ namespace DModulerSpace
                     err.Log($"Cannot create instance of type \"{o.Name}\" !", cex);
                     if(!ignoreConstructErrors) {
                         list = null;
-                        throw err.ThrowLast();
+                        err.ThrowLast();
                     }
                 }
             }
@@ -87,7 +87,7 @@ namespace DModulerSpace
                     try { l.OnAssemblyLoad(this); }
                     catch (Exception lex) {
                         err.Log($"Interface \"{l}\" throwed error on load", lex);
-                        if(!ignoreLoadingErrors) { throw err.ThrowLast(); }
+                        if(!ignoreLoadingErrors) { err.ThrowLast(); }
                     }
                 }
             }
@@ -96,7 +96,7 @@ namespace DModulerSpace
                     try { l.AfterAssemblyLoad(sh); }
                     catch (Exception aex) {
                         err.Log($"Interface \"{l}\" throwed error after load", aex);
-                        if(!ignoreLoadingErrors) { throw err.ThrowLast(); }
+                        if(!ignoreLoadingErrors) { err.ThrowLast(); }
                     }
                 }
             }
