@@ -1,6 +1,6 @@
-<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+<?xml version='1.0' encoding='UTF-8'?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="15.0">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')"/>
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
@@ -33,14 +33,14 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="*.cs" />
+    <Compile Include="*.cs"/>
+    <Reference Include="Result">
+      <HintPath>..\ref\Result.dll</HintPath>
+      <SourcePath>../vutils/Result/Release/Result.dll</SourcePath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Reference Include="System" />
-    <Reference Include="vutils, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\ref\vutils.dll</HintPath>
-    </Reference>
+    <Reference Include="System"/>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Sharer\Sharer.csproj">
@@ -48,5 +48,5 @@
       <Name>Sharer</Name>
     </ProjectReference>
   </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets"/>
 </Project>

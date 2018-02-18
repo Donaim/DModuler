@@ -5,7 +5,7 @@ using System.Linq;
 using System.IO;
 
 using SharerSpace;
-using vutils;
+using ResultSpace;
 
 namespace DModulerSpace
 {
@@ -17,12 +17,12 @@ namespace DModulerSpace
         }
 
         public bool TryLoadLibrary(string file) => LoadLibrary(file, out _);
-        public OutputEx LoadLibrary(string file, out OutputEx re, bool ignoreConstructErrors = false, bool ignoreLoadingErrors = true, bool runAssembly = false) {
-            re = new OutputEx();
+        public ResultV LoadLibrary(string file, out ResultV re, bool ignoreConstructErrors = false, bool ignoreLoadingErrors = true, bool runAssembly = false) {
+            re = new ResultV();
             try { _LoadLibrary(file, re, ignoreConstructErrors, ignoreLoadingErrors, runAssembly); } catch { }
             return re;
         }
-        void _LoadLibrary(string file, OutputEx re, bool ignoreConstructErrors, bool ignoreLoadingErrors, bool runAssembly) {
+        void _LoadLibrary(string file, ResultV re, bool ignoreConstructErrors, bool ignoreLoadingErrors, bool runAssembly) {
             if(!File.Exists(file))
             {
                 throw re.Throw($"Libary file \"{file}\" does not exist!");
@@ -43,7 +43,7 @@ namespace DModulerSpace
 
             if(runAssembly) { runStartups(ldb_list, re); }
         }
-        void autoaddInterfaces(IEnumerable<Type> types, OutputEx re) {
+        void autoaddInterfaces(IEnumerable<Type> types, ResultV re) {
             foreach(var t in types) {
                 var autosharetype = t.GetCustomAttribute<AutoShareTypeAttribute>();
                 if (autosharetype != null) {
@@ -52,7 +52,7 @@ namespace DModulerSpace
                 }
             }
         }
-        static void runStartups(IEnumerable<object> ldb_list, OutputEx re) {
+        static void runStartups(IEnumerable<object> ldb_list, ResultV re) {
             foreach(var o in ldb_list) {
                 if (o is IAssemblyStarter st) {
                     try { st.Start(re); } 
@@ -60,7 +60,7 @@ namespace DModulerSpace
                 }
             }
         }
-        static void createInstances(IEnumerable<Type> types, out IEnumerable<object> list, OutputEx err, bool ignoreConstructErrors) {
+        static void createInstances(IEnumerable<Type> types, out IEnumerable<object> list, ResultV err, bool ignoreConstructErrors) {
             var re = new List<object>();
             list = re;
       
@@ -81,7 +81,7 @@ namespace DModulerSpace
             }
         }
         static bool isTypeToLoad(Type t) => t.GetInterface(nameof(ILoadable)) != default(Type) || t.GetInterface(nameof(IAssemblyStarter)) != default(Type);
-        private void loadIntefaces(IEnumerable<object> list, OutputEx err, bool ignoreLoadingErrors) {
+        private void loadIntefaces(IEnumerable<object> list, ResultV err, bool ignoreLoadingErrors) {
             foreach(var o in list) {
                 if(o is ILoadable l) {
                     try { l.OnAssemblyLoad(this); }

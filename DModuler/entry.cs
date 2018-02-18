@@ -9,16 +9,16 @@ namespace DModulerSpace
             if(args.Length > 0) 
             { 
                 var dm = new DModuler(new SharerSpace.Sharer());
-                if(dm.LoadLibrary(args[0], out var err, false, true, true )) {
+                if(dm.LoadLibrary(args[0], out var re, false, true, true )) {
                     Console.WriteLine("Everything went ok");
                 } else {
-                    Error.WriteLine($"ERROR: {err.Err.Message}");
+                    Error.WriteLine($"ERROR: {re.Err.Message}");
                 }
 
-                var log = err.GetLog();
+                var log = re.GetLog();
                 if(log.Count() > 0) {
                     Error.WriteLine($"LOGS:");
-                    foreach(var l in err.GetLog()) {
+                    foreach(var l in re.GetLog()) {
                         Error.WriteLine($"{l.Message}");
                     }
                 }

@@ -1,12 +1,12 @@
 using System;
 using SharerSpace;
-using vutils;
+using ResultSpace;
 
 namespace DModulerSpace
 {
     public interface IAssemblyStarter
     {
-        void Start(OutputEx o);
+        void Start(ResultV o);
     }
     public interface ILoadable
     {
